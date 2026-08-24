@@ -1,0 +1,334 @@
+# ============================================================================
+# zsh Configuration Template
+# For: macOS & Ubuntu/WSL2
+# Developer & DevSecOps Optimized
+# ============================================================================
+
+# ============================================================================
+# HISTORY CONFIGURATION
+# ============================================================================
+
+HISTFILE=~/.zsh_history
+HISTSIZE=50000              # In-memory history size
+SAVEHIST=50000              # Saved history size
+
+# History options
+setopt EXTENDED_HISTORY     # Save timestamp and duration
+setopt SHARE_HISTORY        # Share history between sessions in real-time
+setopt APPEND_HISTORY       # Append to history file, don't replace
+setopt HIST_IGNORE_DUPS     # Don't save duplicate commands
+setopt HIST_FIND_NO_DUPS    # Skip duplicates when searching
+setopt HIST_IGNORE_SPACE    # Don't save commands starting with space (secret commands)
+setopt HIST_REDUCE_BLANKS   # Remove extra blank lines
+
+# ============================================================================
+# COMPLETION CONFIGURATION
+# ============================================================================
+
+# Initialize completion system
+# -i: silently skip insecure directories. Homebrew ships /opt/homebrew/share
+# as group-writable (mode 775); without -i, compinit prompts interactively
+# with "insecure directories" on every new zsh session.
+autoload -Uz compinit
+compinit -i
+
+# Load completion menu module (enables interactive selection)
+zmodload zsh/complist
+
+# Completion options
+setopt MENU_COMPLETE              # Automatically use first completion on TAB
+setopt AUTO_LIST                  # Show list on ambiguous completion
+setopt COMPLETE_IN_WORD           # Complete inside words, not just at end
+setopt ALWAYS_TO_END              # Move cursor to end when completing
+
+# Completion styling
+zstyle ':completion:*:matches' group 'yes'
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' '+r:|=**'  # Case-insensitive
+
+# ============================================================================
+# DIRECTORY NAVIGATION
+# ============================================================================
+
+# Auto cd: just type directory name to cd into it
+setopt AUTO_CD
+
+# Automatically pushd when changing directories
+setopt AUTO_PUSHD
+
+# Don't push duplicates onto the directory stack
+setopt PUSHD_IGNORE_DUPS
+
+# Track directory stack size
+DIRSTACKSIZE=20
+
+# ============================================================================
+# COMMAND CORRECTION & BEHAVIOR
+# ============================================================================
+
+# Enable command correction (optional - can be annoying)
+setopt CORRECT
+
+# Enable interactive comments on command line (not just in scripts)
+setopt interactive_comments
+
+# ============================================================================
+# KEY BINDINGS
+# ============================================================================
+
+# Use emacs key bindings
+bindkey -e
+
+# Fix Delete key issue (sends tilde instead of deleting)
+bindkey "^[[3~" delete-char
+bindkey "^[[3;5~" delete-word
+
+# History substring search bindings (if using history-substring-search plugin)
+bindkey "$terminfo[kcuu1]" history-substring-search-up
+bindkey "$terminfo[kcud1]" history-substring-search-down
+
+# ============================================================================
+# PLATFORM-SPECIFIC SETUP
+# ============================================================================
+
+# Detect platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    PLATFORM="macos"
+    export HOMEBREW_PREFIX=$(brew --prefix)
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux/WSL2
+    PLATFORM="linux"
+    if [[ -n "$WSL_DISTRO_NAME" ]]; then
+        export WSL_DETECTED=true
+    fi
+fi
+
+# ============================================================================
+# PLUGIN LOADING
+# ============================================================================
+
+# Color output for common commands
+export CLICOLOR=1
+
+# zsh-syntax-highlighting (MUST be loaded first)
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+        source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+    fi
+else
+    if [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+        source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    fi
+fi
+
+# zsh-autosuggestions (load AFTER syntax-highlighting)
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+        source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+    fi
+else
+    if [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+        source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+    fi
+fi
+
+# zsh-history-substring-search
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh" ]; then
+        source "$HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh"
+    fi
+else
+    if [ -f /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh ]; then
+        source /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+    elif [ -f ~/.zsh-plugins/zsh-history-substring-search/zsh-history-substring-search.zsh ]; then
+        source ~/.zsh-plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
+    fi
+fi
+
+# z - frecent folder navigation
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/etc/profile.d/z.sh" ]; then
+        source "$HOMEBREW_PREFIX/etc/profile.d/z.sh"
+    fi
+else
+    if [ -f ~/.z-repo/z.sh ]; then
+        source ~/.z-repo/z.sh
+    fi
+fi
+
+# fzf - fuzzy finder key bindings
+if [ -f ~/.fzf.zsh ]; then
+    source ~/.fzf.zsh
+fi
+
+# ============================================================================
+# PROMPT CONFIGURATION
+# ============================================================================
+
+# Simple, clean prompt
+PROMPT='%F{cyan}%~%f %F{blue}❯%f '
+
+# Optional: Add git branch to prompt (requires git info in prompt)
+# Uncomment the function and modify PROMPT to use it
+
+# git_prompt_info() {
+#     local branch=$(git branch 2>/dev/null | sed -n '/^\*/s/^\* //p')
+#     [ -n "$branch" ] && echo "%F{green}[$branch]%f "
+# }
+# PROMPT='%F{cyan}%~%f $(git_prompt_info)%F{blue}❯%f '
+
+# Right-aligned prompt (optional)
+# RPROMPT='%F{gray}%T%f'  # Shows time on right
+
+# ============================================================================
+# ALIASES - GENERAL
+# ============================================================================
+
+alias ll='ls -lah'          # Long format with all files
+alias la='ls -la'           # Long format with hidden files
+alias l='ls -l'             # Long format
+alias ...='cd ../..'        # Go up 2 directories
+alias ....='cd ../../..'    # Go up 3 directories
+
+# ============================================================================
+# ALIASES - GIT
+# ============================================================================
+
+alias gs='git status'
+alias gc='git commit'
+alias gcm='git commit -m'
+alias gp='git push'
+alias gpl='git pull'
+alias gb='git branch'
+alias gco='git checkout'
+alias gd='git diff'
+alias gl='git log --oneline'
+alias gla='git log --oneline --all --graph --decorate'
+
+# ============================================================================
+# ALIASES - DEVELOPMENT
+# ============================================================================
+
+# Node.js / npm
+alias npm-list='npm list --depth=0'
+
+# Python
+alias python='python3'
+alias pip='pip3'
+
+# Docker (if installed)
+if command -v docker &> /dev/null; then
+    alias d='docker'
+    alias dc='docker compose'
+    alias dcu='docker compose up'
+    alias dcd='docker compose down'
+fi
+
+# Kubernetes (if kubectl installed)
+if command -v kubectl &> /dev/null; then
+    alias k='kubectl'
+    alias kg='kubectl get'
+    alias kd='kubectl describe'
+    alias kl='kubectl logs'
+    alias kex='kubectl exec -it'
+fi
+
+# ============================================================================
+# ALIASES - DEVOPS & SYSTEM
+# ============================================================================
+
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip --color=auto'
+
+# Quick edit config files
+alias zshconfig='${EDITOR} ~/.zshrc'
+alias zshreload='source ~/.zshrc'
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+
+# Default editor
+export EDITOR='nano'
+# export EDITOR='vim'  # Uncomment if you prefer vim
+
+# Less paging configuration
+export LESS='-R -S -F -X'
+
+# ============================================================================
+# LANGUAGE & LOCALE
+# ============================================================================
+
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# ============================================================================
+# PATH CONFIGURATION
+# ============================================================================
+
+# Ensure local bin is in PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Add cargo (Rust) to PATH if installed
+if [ -f "$HOME/.cargo/env" ]; then
+    . "$HOME/.cargo/env"
+fi
+
+# ============================================================================
+# WSL2-SPECIFIC CONFIGURATION
+# ============================================================================
+
+if [[ -n "$WSL_DISTRO_NAME" ]]; then
+    # Performance optimization: use /tmp for temp files
+    export TEMP=/tmp
+    export TMP=/tmp
+    
+    # Optional: Enable Windows interop features
+    # export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0
+    
+    # WSL2 has slower disk I/O to Windows filesystem, work in Linux home when possible
+fi
+
+# ============================================================================
+# FUNCTIONS
+# ============================================================================
+
+# Create and enter a directory
+mcd() {
+    mkdir -p "$1" && cd "$1"
+}
+
+# Extract archives automatically
+extract() {
+    if [ -f "$1" ]; then
+        case "$1" in
+            *.tar.bz2)   tar xjf "$1"   ;;
+            *.tar.gz)    tar xzf "$1"   ;;
+            *.bz2)       bunzip2 "$1"   ;;
+            *.rar)       unrar x "$1"   ;;
+            *.gz)        gunzip "$1"    ;;
+            *.tar)       tar xf "$1"    ;;
+            *.tbz2)      tar xjf "$1"   ;;
+            *.tgz)       tar xzf "$1"   ;;
+            *.zip)       unzip "$1"     ;;
+            *.Z)         uncompress "$1";;
+            *.7z)        7z x "$1"      ;;
+            *)           echo "'$1' cannot be extracted via extract()" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+# ============================================================================
+# STARTUP MESSAGES (Optional)
+# ============================================================================
+
+# Show a fun message or system info on startup
+# echo "🚀 Welcome to zsh!"
+# neofetch  # Requires: brew install neofetch
+
+# ============================================================================
+# END OF CONFIGURATION
+# ============================================================================
