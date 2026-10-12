@@ -10,7 +10,7 @@ For: MacBook Air M4, kitty 0.48, zsh 5.9 (emacs keymap), Homebrew plugins.
 
 ## 1. Daily-driver zsh shortcuts (emacs mode)
 
-Your `~/.zshrc` line 73 sets `bindkey -e` — these are the bindings that matter.
+Your `~/.zshrc` line 106 sets `bindkey -e` — these are the bindings that matter.
 
 ### Line editing
 
@@ -34,7 +34,7 @@ Your `~/.zshrc` line 73 sets `bindkey -e` — these are the bindings that matter
 | `Ctrl+Q`       | Push current line aside (pop with `Ctrl+Q` again after next command) |
 | `Ctrl+V` `<key>` | Insert next key literally               |
 
-### Delete key fix (already in your config, line 76–77)
+### Delete key fix (already in your config, line 109–110)
 
 - `Fn+Delete` (forward delete) works correctly
 - `Ctrl+Fn+Delete` deletes a word forward
@@ -55,7 +55,7 @@ Your `~/.zshrc` line 73 sets `bindkey -e` — these are the bindings that matter
 
 ### Completion (TAB)
 
-Your `compinit -i` (line 114–115) gives you a fast menu-driven completer.
+Your `compinit -i` (line 59–60) gives you a fast menu-driven completer.
 
 | Key                | Action                                              |
 |--------------------|-----------------------------------------------------|
@@ -67,7 +67,7 @@ Your `compinit -i` (line 114–115) gives you a fast menu-driven completer.
 | `Ctrl+X m`         | Insert most-recent file matching what you typed     |
 | `Ctrl+X r`         | History-incremental-search filenames                |
 
-> Completion is **case-insensitive** (line 39: `m:{a-zA-Z}={A-Za-z}`).
+> Completion is **case-insensitive** (line 72: `m:{a-zA-Z}={A-Za-z}`).
 > `cd`/`cp`/etc. complete paths; `git` completes subcommands; `kubectl`,
 > `docker`, `brew` all have their own.
 
@@ -84,7 +84,7 @@ Lines 47–56 enable these:
 
 ### Command correction
 
-`CORRECT` is on (line 63). For typos like `git satus`:
+`CORRECT` is on (line 96). For typos like `git satus`:
 
 ```
 zsh: correct 'satus' to 'status' [nyae]?
@@ -96,12 +96,12 @@ Keys: `y` yes · `n` no · `a` abort · `e` edit.
 
 ## 2. Your plugins — what they do and how to drive them
 
-### zsh-syntax-highlighting (loaded at line 124)
+### zsh-syntax-highlighting (loaded at line 182)
 
 Live colors as you type — green command exists, red doesn't. Nothing to press;
 just look. Must load **before** autosuggestions (your config does this).
 
-### zsh-autosuggestions (loaded at line 135)
+### zsh-autosuggestions (loaded at line 130)
 
 Gray ghost text appears to the right of your cursor.
 
@@ -117,7 +117,7 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ```
 
-### zsh-history-substring-search (loaded at line 146, bound at 157–158)
+### zsh-history-substring-search (loaded at line 160, bound at 172–176)
 
 | Key   | Action                                                      |
 |-------|-------------------------------------------------------------|
@@ -128,7 +128,7 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 Unlike `Ctrl+R`, this lets you walk forward/back through every match without
 retyping. Case-insensitive by default.
 
-### z — directory jumping (loaded at line 163)
+### z — directory jumping (loaded at line 141)
 
 Tracks a "frecency" (frequency + recency) of everywhere you `cd`.
 
@@ -138,7 +138,7 @@ z repo zsh         # match by path-segment
 z -l zsh-setup     # list matches with scores
 ```
 
-### fzf — fuzzy finder (loaded at line 173)
+### fzf — fuzzy finder (loaded at line 152)
 
 Three shell-level bindings (active in your fzf install):
 
@@ -175,7 +175,7 @@ Search syntax (multiple terms separated by spaces):
 
 ## 3. Aliases you actually have
 
-From your `~/.zshrc` lines 187–234.
+From your `~/.zshrc` lines 210–272.
 
 ### General
 `ll` `la` `l` · `...` (cd ../..) · `....` (cd ../../..)
@@ -197,7 +197,7 @@ From your `~/.zshrc` lines 187–234.
 
 ## 4. Functions
 
-From `~/.zshrc` lines 274–297.
+From `~/.zshrc` lines 320–349.
 
 ```bash
 mcd mydir          # mkdir + cd into it
@@ -286,7 +286,7 @@ Reload kitty config after edits: `Ctrl+Shift+F5` or `kill -SIGUSR1 $(pgrep kitty
 
 ## 6. macOS shell integration extras
 
-Your `~/.zshrc` loads iTerm2 shell integration (line 334) — with kitty, the
+Your `~/.zshrc` loads iTerm2 shell integration (line 385) — with kitty, the
 *mark-jump* and *last-command-output* features don't apply, but these kitty
 built-ins fill the gap and are more reliable:
 
@@ -352,7 +352,7 @@ rg --line-number . | fzf --delimiter : --nth 3.. \
 | New completion not picked up         | `rm ~/.zcompdump* && exec zsh`                  |
 | Ghost-suggestion color invisible     | `export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=cyan'` |
 | `↑` searches but skips duplicates    | Expected: `HIST_FIND_NO_DUPS` is on (line 20)   |
-| `Ctrl+R` shows fzf, not zsh          | Expected — fzf replaced it (line 173)           |
+| `Ctrl+R` shows fzf, not zsh          | Expected — fzf replaced it (line 152)           |
 | `kitty_mod` shortcut doesn't fire    | Check if app grabbed input; try `Shift+` variant|
 | Paste mangled                        | `paste_actions` (line ~731 of kitty.conf)       |
 

@@ -97,6 +97,10 @@ cp zshrc-template ~/.zshrc
 source ~/.zshrc
 ```
 
+Machine-specific overrides (secrets, extra PATH entries, custom functions)
+belong in `~/.zshrc.local` — the template sources it at the end if present,
+so it survives re-copying the template.
+
 ### Customization
 Edit `~/.zshrc` to customize:
 - Prompt style
