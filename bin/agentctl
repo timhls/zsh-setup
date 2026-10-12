@@ -21,6 +21,10 @@
 #   agentctl profile <name>         apply a profile (lean default + extras)
 #   agentctl profiles               list profiles
 #   agentctl skills                 resync ~/.agents/skills -> ~/.opencode/skill symlinks
+#   agentctl fixhooks               repair apm-deployed claude hooks: repoint
+#                                   PLUGIN_ROOT refs, prune dead script hooks,
+#                                   dedupe repeated registrations, deploy
+#                                   gh-cli shims/ that apm's deploy skips
 
 set -euo pipefail
 
@@ -246,16 +250,43 @@ cmd_skills() {
   echo "synced $n skill symlinks -> $dst"
 }
 
-# --- fixhooks: repoint apm gh-cli PLUGIN_ROOT refs at deployed hook scripts ----
+# --- fixhooks: repair apm-deployed claude hooks ---------------------------------
+# 1. repoint ${CLAUDE_PLUGIN_ROOT} refs at ~/.claude/hooks/gh-cli/ (as before)
+# 2. prune dead apm script hooks: entries whose `bash "<path>.sh"` target no
+#    longer exists (removed packages leave stale registrations behind)
+# 3. dedupe identical (event, matcher, command) registrations (apm appends on
+#    every install without reconciling)
+# 4. deploy gh-cli shims/ that apm's hook deploy misses (it copies only
+#    top-level *.sh, not subdirectories)
+# Never touches: statusLine, Orca blobs (inline shell), Hindsight (node "..."),
+# compound commands (SCRIPT=... guards) — only exact `bash "<path>.sh"` shapes.
 cmd_fixhooks() {
   python3 - "$HOME_DIR/.claude/hooks/gh-cli" <<'PY'
-import sys, json, os
+import sys, json, os, re, glob, shutil
 hooks_dir = sys.argv[1]
+apm_modules = os.path.expanduser('~/apm_modules')
+claude_hooks = os.path.expanduser('~/.claude/hooks')
 targets = [
     os.path.expanduser('~/.claude/apm-hooks.json'),
     os.path.expanduser('~/.claude/settings.json'),
 ]
-def fix(obj):
+SCRIPT_RE = re.compile(r'^bash "([^"]+\.sh)"$')
+
+def command_alive(cmd):
+    """True/False for plain `bash "<path>.sh"` commands; None = not ours to judge."""
+    m = SCRIPT_RE.match(cmd.strip())
+    if not m: return None
+    path = m.group(1)
+    if '${CLAUDE_PROJECT_DIR}' in path:
+        # project-relative apm hook: alive iff the package is deployed or
+        # still present in apm_modules (glob over the org/repo layout)
+        seg = re.search(r'\.claude/hooks/([^/"]+)', path)
+        if not seg: return False
+        if os.path.isdir(os.path.join(claude_hooks, seg.group(1))): return True
+        return bool(glob.glob(f'{apm_modules}/**/{seg.group(1)}', recursive=True))
+    return os.path.isfile(os.path.expanduser(path))
+
+def repoint(obj):
     n = 0
     def walk(o):
         nonlocal n
@@ -271,15 +302,62 @@ def fix(obj):
             for x in o: walk(x)
     walk(obj)
     return n
+
+def prune_dedupe(events):
+    seen, dead, dup = set(), 0, 0
+    for ev, groups in events.items():
+        if not isinstance(groups, list): continue
+        kept = []
+        for g in groups:
+            if not isinstance(g, dict) or not isinstance(g.get('hooks'), list):
+                kept.append(g); continue
+            kh = []
+            for h in g['hooks']:
+                cmd = h.get('command') if isinstance(h, dict) else None
+                if not isinstance(cmd, str): kh.append(h); continue
+                if command_alive(cmd) is False:
+                    dead += 1
+                    print(f'  prune dead [{ev}]: {cmd}')
+                    continue
+                key = (ev, g.get('matcher'), cmd)
+                if key in seen:
+                    dup += 1
+                    print(f'  dedupe    [{ev}]: {cmd}')
+                    continue
+                seen.add(key)
+                kh.append(h)
+            if kh:
+                g['hooks'] = kh
+                kept.append(g)
+        events[ev] = kept
+    return dead, dup
+
 for p in targets:
     if not os.path.exists(p): continue
     try:
         d = json.load(open(p))
     except Exception as e:
         print(f'skip {p}: {e}'); continue
-    n = fix(d)
+    n = repoint(d)
+    dead = dup = 0
+    # settings.json nests events under "hooks"; apm-hooks.json has them top-level
+    if isinstance(d.get('hooks'), dict):
+        dead, dup = prune_dedupe(d['hooks'])
+    elif d and all(isinstance(v, list) for v in d.values()):
+        dead, dup = prune_dedupe(d)
     json.dump(d, open(p, 'w'), indent=2)
-    print(f'{p}: repointed {n}')
+    print(f'{p}: repointed {n}, pruned {dead}, deduped {dup}')
+
+shims_dst = os.path.join(hooks_dir, 'shims')
+if os.path.isdir(shims_dst):
+    print('shims: present')
+elif os.path.isfile(os.path.join(hooks_dir, 'setup-shims.sh')):
+    src = glob.glob(f'{apm_modules}/**/gh-cli/hooks/shims', recursive=True)
+    if src:
+        shutil.copytree(sorted(src)[0], shims_dst)
+        print(f'shims: deployed {sorted(src)[0]} -> {shims_dst}')
+    else:
+        print('shims: no source in apm_modules; left missing')
 PY
 }
 

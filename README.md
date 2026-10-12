@@ -305,7 +305,9 @@ agentctl profile lean                  # default: zai trio + zai-vision
 agentctl profile azure|security|data|docs|github|comms|gateway|all
 agentctl mcp on|off <name> [--agent a,b]
 agentctl skills                        # resync ~/.agents/skills -> opencode
-agentctl fixhooks                      # repair apm gh-cli hook paths in claude configs
+agentctl fixhooks                      # repair apm hooks in claude configs: repoint
+                                       # PLUGIN_ROOT paths, prune dead entries, dedupe
+                                       # repeats, deploy gh-cli shims/ apm skips
 ```
 
 Symlinked onto PATH via `~/.local/bin/agentctl`. The global agent-instructions
