@@ -105,8 +105,8 @@ if brew list fzf &>/dev/null; then
 else
     brew install fzf
     echo "   ✅ fzf installed"
-    # Run fzf installer for shell integration
-    $(brew --prefix)/opt/fzf/install --all --no-bash --no-fish 2>/dev/null || true
+    # Shell integration (key bindings + completion) is handled by
+    # zshrc-template via `source <(fzf --zsh)` — no legacy installer needed.
 fi
 
 # Step 5: Install fonts (optional for themed prompts)
