@@ -22,8 +22,31 @@ setopt HIST_IGNORE_SPACE    # Don't save commands starting with space (secret co
 setopt HIST_REDUCE_BLANKS   # Remove extra blank lines
 
 # ============================================================================
+# PLATFORM-SPECIFIC SETUP (before completion: HOMEBREW_PREFIX needed there)
+# ============================================================================
+
+# Detect platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    PLATFORM="macos"
+    (( $+commands[brew] )) && export HOMEBREW_PREFIX=$(brew --prefix)
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux/WSL2
+    PLATFORM="linux"
+    if [[ -n "$WSL_DISTRO_NAME" ]]; then
+        export WSL_DETECTED=true
+    fi
+fi
+
+# ============================================================================
 # COMPLETION CONFIGURATION
 # ============================================================================
+
+# Extra completion sources — must be added to fpath BEFORE compinit
+# zsh-completions (Homebrew)
+if [[ -n "${HOMEBREW_PREFIX:-}" && -d "$HOMEBREW_PREFIX/share/zsh-completions" ]]; then
+    fpath=("$HOMEBREW_PREFIX/share/zsh-completions" $fpath)
+fi
 
 # Initialize completion system
 # -i: silently skip insecure directories. Homebrew ships /opt/homebrew/share
@@ -36,7 +59,6 @@ compinit -i
 zmodload zsh/complist
 
 # Completion options
-setopt MENU_COMPLETE              # Automatically use first completion on TAB
 setopt AUTO_LIST                  # Show list on ambiguous completion
 setopt COMPLETE_IN_WORD           # Complete inside words, not just at end
 setopt ALWAYS_TO_END              # Move cursor to end when completing
@@ -82,26 +104,8 @@ bindkey -e
 bindkey "^[[3~" delete-char
 bindkey "^[[3;5~" delete-word
 
-# History substring search bindings (if using history-substring-search plugin)
-bindkey "$terminfo[kcuu1]" history-substring-search-up
-bindkey "$terminfo[kcud1]" history-substring-search-down
-
-# ============================================================================
-# PLATFORM-SPECIFIC SETUP
-# ============================================================================
-
-# Detect platform
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    PLATFORM="macos"
-    export HOMEBREW_PREFIX=$(brew --prefix)
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Linux/WSL2
-    PLATFORM="linux"
-    if [[ -n "$WSL_DISTRO_NAME" ]]; then
-        export WSL_DETECTED=true
-    fi
-fi
+# History substring search Up/Down bindings live in the plugin section below
+# (they require the plugin's widgets and literal escape sequences).
 
 # ============================================================================
 # PLUGIN LOADING
@@ -110,18 +114,12 @@ fi
 # Color output for common commands
 export CLICOLOR=1
 
-# zsh-syntax-highlighting (MUST be loaded first)
-if [[ "$PLATFORM" == "macos" ]]; then
-    if [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-        source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-    fi
-else
-    if [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-        source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-    fi
-fi
+# Load order (per upstream recommendations):
+#   autosuggestions -> z -> fzf -> history-substring-search -> syntax-highlighting
+# zsh-syntax-highlighting MUST be sourced LAST: it wraps ZLE widgets at load
+# time, so compinit, all bindkeys and other plugins must already be in place.
 
-# zsh-autosuggestions (load AFTER syntax-highlighting)
+# zsh-autosuggestions
 if [[ "$PLATFORM" == "macos" ]]; then
     if [ -f "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
         source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -130,6 +128,25 @@ else
     if [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
         source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
     fi
+fi
+
+# z - frecent folder navigation
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/etc/profile.d/z.sh" ]; then
+        source "$HOMEBREW_PREFIX/etc/profile.d/z.sh"
+    fi
+else
+    if [ -f ~/.z-repo/z.sh ]; then
+        source ~/.z-repo/z.sh
+    fi
+fi
+
+# fzf - fuzzy finder shell integration (key bindings + completion)
+# fzf >= 0.48 ships `fzf --zsh`; older git-clone installs write ~/.fzf.zsh
+if command -v fzf &>/dev/null; then
+    source <(fzf --zsh)
+elif [ -f ~/.fzf.zsh ]; then
+    source ~/.fzf.zsh
 fi
 
 # zsh-history-substring-search
@@ -145,20 +162,24 @@ else
     fi
 fi
 
-# z - frecent folder navigation
-if [[ "$PLATFORM" == "macos" ]]; then
-    if [ -f "$HOMEBREW_PREFIX/etc/profile.d/z.sh" ]; then
-        source "$HOMEBREW_PREFIX/etc/profile.d/z.sh"
-    fi
-else
-    if [ -f ~/.z-repo/z.sh ]; then
-        source ~/.z-repo/z.sh
-    fi
+# History substring search on Up/Down — literal escape sequences (both normal
+# and application cursor-key modes), no terminfo dependency
+if (( $+functions[history-substring-search-up] )); then
+    bindkey '^[[A' history-substring-search-up
+    bindkey '^[OA' history-substring-search-up
+    bindkey '^[[B' history-substring-search-down
+    bindkey '^[OB' history-substring-search-down
 fi
 
-# fzf - fuzzy finder key bindings
-if [ -f ~/.fzf.zsh ]; then
-    source ~/.fzf.zsh
+# zsh-syntax-highlighting (MUST be loaded last, per upstream)
+if [[ "$PLATFORM" == "macos" ]]; then
+    if [ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+        source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+    fi
+else
+    if [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+        source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    fi
 fi
 
 # ============================================================================
@@ -283,10 +304,10 @@ if [[ -n "$WSL_DISTRO_NAME" ]]; then
     # Performance optimization: use /tmp for temp files
     export TEMP=/tmp
     export TMP=/tmp
-    
+
     # Optional: Enable Windows interop features
     # export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0
-    
+
     # WSL2 has slower disk I/O to Windows filesystem, work in Linux home when possible
 fi
 
@@ -322,12 +343,12 @@ extract() {
 }
 
 # ============================================================================
-# STARTUP MESSAGES (Optional)
+# LOCAL OVERRIDES
 # ============================================================================
 
-# Show a fun message or system info on startup
-# echo "🚀 Welcome to zsh!"
-# neofetch  # Requires: brew install neofetch
+# Machine-specific aliases/env/functions go in ~/.zshrc.local
+# (gitignored via *.local; this template stays generic)
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # ============================================================================
 # END OF CONFIGURATION
