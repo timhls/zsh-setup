@@ -246,25 +246,40 @@ cmd_skills() {
   echo "synced $n skill symlinks -> $dst"
 }
 
-# --- fixhooks: repoint apm-hooks.json PLUGIN_ROOT refs at deployed hook scripts --
+# --- fixhooks: repoint apm gh-cli PLUGIN_ROOT refs at deployed hook scripts ----
 cmd_fixhooks() {
-  python3 - "$HOME_DIR/.claude/apm-hooks.json" "$HOME_DIR/.claude/hooks/gh-cli" <<'PY'
+  python3 - "$HOME_DIR/.claude/hooks/gh-cli" <<'PY'
 import sys, json, os
-p, hooks_dir = sys.argv[1:3]
-if not os.path.exists(p):
-    sys.exit('no apm-hooks.json')
-d = json.load(open(p))
-n = 0
-for evt in d.values():
-    for entry in evt:
-        for h in entry.get('hooks', []):
-            c = h.get('command', '')
-            if 'PLUGIN_ROOT' in c:
-                script = c.split('/')[-1].rstrip('\\"')
-                h['command'] = f'bash "{hooks_dir}/{script}"'
-                n += 1
-json.dump(d, open(p, 'w'), indent=2)
-print(f'repointed {n} hook commands -> {hooks_dir}')
+hooks_dir = sys.argv[1]
+targets = [
+    os.path.expanduser('~/.claude/apm-hooks.json'),
+    os.path.expanduser('~/.claude/settings.json'),
+]
+def fix(obj):
+    n = 0
+    def walk(o):
+        nonlocal n
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == 'command' and isinstance(v, str) and 'PLUGIN_ROOT' in v:
+                    script = v.split('/')[-1].rstrip('\\"')
+                    o[k] = f'bash "{hooks_dir}/{script}"'
+                    n += 1
+                else:
+                    walk(v)
+        elif isinstance(o, list):
+            for x in o: walk(x)
+    walk(obj)
+    return n
+for p in targets:
+    if not os.path.exists(p): continue
+    try:
+        d = json.load(open(p))
+    except Exception as e:
+        print(f'skip {p}: {e}'); continue
+    n = fix(d)
+    json.dump(d, open(p, 'w'), indent=2)
+    print(f'{p}: repointed {n}')
 PY
 }
 
