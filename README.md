@@ -294,23 +294,7 @@ After initial setup, personalize your shell:
 
 For detailed configuration options and advanced usage, see `SETUPGUIDE.md`.
 
-## 🤖 agentctl (AI coding-agent MCP manager)
-
-`bin/agentctl` manages global MCP-server enablement across the four first-class
-AI coding agents (claude, codex, opencode, omp) from the `~/apm.yml` manifest.
-
-```bash
-agentctl status                        # enablement matrix across all agents
-agentctl profile lean                  # default: zai trio + zai-vision
-agentctl profile azure|security|data|docs|github|comms|gateway|all
-agentctl mcp on|off <name> [--agent a,b]
-agentctl skills                        # resync ~/.agents/skills -> opencode
-agentctl fixhooks                      # repair apm hooks in claude configs: repoint
-                                       # PLUGIN_ROOT paths, prune dead entries, dedupe
-                                       # repeats, deploy gh-cli shims/ apm skips
-```
-
-Symlinked onto PATH via `~/.local/bin/agentctl`. The global agent-instructions
-file `~/AGENTS.md` documents the full SSOT architecture (skills, MCP, secrets,
-model routing); deep-dive docs live in
-`~/Repos/wtr-pro-homelab/docs/setup/workstation-agent-config.md`.
+`agentctl` moved to the `wtr-pro-homelab` repository because it manages
+workstation AI coding-agent configuration rather than zsh. The tracked source
+lives at `~/Repos/wtr-pro-homelab/scripts/agentctl`; it remains available on
+PATH via `~/.local/bin/agentctl`.
