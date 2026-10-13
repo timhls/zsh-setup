@@ -1,6 +1,7 @@
 # zsh Setup Repository
 
-Complete zsh setup guide and automation scripts for macOS and Ubuntu WSL2. Optimized for developers and DevSecOps engineers.
+Zsh setup guide, installation scripts, and shell configuration template for
+macOS and Ubuntu WSL2. Optimized for developers and DevSecOps engineers.
 
 ## 📁 Files in This Repository
 
@@ -292,9 +293,14 @@ After initial setup, personalize your shell:
 
 **Created from research and best practices** for optimal developer and DevSecOps workflows.
 
-For detailed configuration options and advanced usage, see `SETUPGUIDE.md`.
+For detailed shell configuration options and advanced usage, see
+`SETUPGUIDE.md`.
 
-`agentctl` moved to the `wtr-pro-homelab` repository because it manages
-workstation AI coding-agent configuration rather than zsh. The tracked source
-lives at `~/Repos/wtr-pro-homelab/scripts/agentctl`; it remains available on
-PATH via `~/.local/bin/agentctl`.
+## 🤖 Workstation Agent Tooling
+
+`agentctl` previously lived here but moved to the
+[wtr-pro-homelab repository](https://github.com/timhls/wtr-pro-homelab/blob/main/scripts/agentctl)
+because it manages workstation AI coding-agent configuration rather than zsh.
+See
+[Workstation Coding-Agent Configuration](https://github.com/timhls/wtr-pro-homelab/blob/main/docs/setup/workstation-agent-config.md)
+for its canonical documentation.
