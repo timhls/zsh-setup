@@ -343,6 +343,14 @@ extract() {
 }
 
 # ============================================================================
+# OPTIONAL MODULES
+# ============================================================================
+
+# vpn.zsh — WireGuard manual control (vpn-on / vpn-off / vpn-status).
+# Symlink modules into ~/.zsh-modules/ or source them directly:
+[ -f ~/.zsh-modules/vpn.zsh ] && source ~/.zsh-modules/vpn.zsh
+
+# ============================================================================
 # LOCAL OVERRIDES
 # ============================================================================
 
