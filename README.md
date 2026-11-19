@@ -43,6 +43,9 @@ macOS and Ubuntu WSL2. Optimized for developers and DevSecOps engineers.
 ### Modules
 - **`vpn.zsh`** - WireGuard VPN manual control for macOS (`vpn-on` / `vpn-off` / `vpn-status`)
   - Prevents wake auto-connect of the WireGuard NetworkService
+  - `vpn-on` waits for the tunnel and is idempotent ("already connected");
+    `vpn-status` decodes states (`connected` / `disconnected` / `disabled`)
+    and returns script-friendly exit codes
   - Loaded from `~/.zshenv` so the functions also work in non-interactive
     shells (agent shells, `zsh -c`, ssh one-shots)
   - Installers symlink it into `~/.zsh-modules/`; this repo is the single

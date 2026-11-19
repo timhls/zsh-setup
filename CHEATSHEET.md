@@ -204,6 +204,24 @@ mcd mydir          # mkdir + cd into it
 extract file.tar.gz  # auto-detects tar/zip/rar/7z/gz/bz2/Z
 ```
 
+### VPN helpers (macOS WireGuard, `vpn.zsh` module)
+
+```bash
+vpn-on        # connect and wait (up to 10s) — "already connected" if up
+vpn-off       # disconnect + disable service (no wake auto-connect)
+vpn-status    # decoded state: connected / disconnected / disabled
+```
+
+- `vpn-status` exit codes: `0` connected, `1` otherwise, `2` service missing
+  (script-friendly: `vpn-status &> /dev/null && echo up`).
+- When connected, `vpn-status` also shows the tunnel IP and whether the
+  default route goes through the tunnel (full vs split).
+- "disabled" = the intended state after `vpn-off` (scutil's cryptic
+  "(Invalid)"); `vpn-on` from there auto-launches WireGuard.app.
+- Loaded from `~/.zshenv` (via `~/.zsh-modules/vpn.zsh` → this repo), so the
+  functions also work in non-interactive shells (agent shells, `zsh -c`, ssh).
+- Overrides: `VPN_WG_SERVICE` (service name), `VPN_WAIT_SECS` (wait, seconds).
+
 ---
 
 ## 5. kitty keyboard shortcuts

@@ -92,7 +92,24 @@ After installation on either platform, **restart your terminal** to use the new 
 
 ## Configuration Fundamentals
 
-All zsh configuration lives in `~/.zshrc` (interactive shells) and `~/.zprofile` (login shells).
+All zsh configuration lives in `~/.zshrc` (interactive shells), `~/.zshenv` (every invocation), and `~/.zprofile` (login shells).
+
+### zshenv vs zshrc — what goes where
+
+zsh reads `~/.zshenv` for **every** invocation (interactive, `zsh -c` one-shots,
+scripts, ssh commands) but `~/.zshrc` only for interactive shells. So:
+
+- `~/.zshrc` — prompt, aliases, plugins, completion, anything interactive-only.
+- `~/.zshenv` — PATH setup and cheap non-interactive-safe modules whose
+  functions must exist everywhere (e.g. the `vpn-on/off/status` helpers used
+  from agent shells). Keep it minimal — every zsh on the machine runs it.
+- Modules are symlinked from this repo into `~/.zsh-modules/` and sourced by
+  `~/.zshenv` (see `zshenv-template`); the repo stays the single source of truth.
+
+```bash
+# Copy the zshenv template if you don't have one yet (never overwrite blindly)
+cp -n zshenv-template ~/.zshenv
+```
 
 ### Basic Setup
 

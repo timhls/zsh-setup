@@ -9,7 +9,12 @@ No linter configured. If `shellcheck` is available, run it on the scripts:
 
 ```bash
 shellcheck install-macos.sh install-ubuntu-wsl.sh
+zsh -n vpn.zsh zshrc-template zshenv-template   # zsh syntax check
 ```
+
+Note: `vpn.zsh` is symlinked live into `~/.zsh-modules/` and sourced by
+`~/.zshenv` on every shell — a syntax error there breaks all new shells.
+Always `zsh -n vpn.zsh` before committing changes to it.
 
 ## Tests
 
