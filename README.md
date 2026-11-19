@@ -40,6 +40,20 @@ macOS and Ubuntu WSL2. Optimized for developers and DevSecOps engineers.
   - Function utilities
   - Platform-specific optimizations
 
+### Modules
+- **`vpn.zsh`** - WireGuard VPN manual control for macOS (`vpn-on` / `vpn-off` / `vpn-status`)
+  - Prevents wake auto-connect of the WireGuard NetworkService
+  - Loaded from `~/.zshenv` so the functions also work in non-interactive
+    shells (agent shells, `zsh -c`, ssh one-shots)
+  - Installers symlink it into `~/.zsh-modules/`; this repo is the single
+    source of truth
+
+### Environment
+- **`zshenv-template`** - Minimal `~/.zshenv` template (sourced by every zsh invocation)
+  - PATH setup (uv)
+  - Non-interactive-safe module loading (`~/.zsh-modules/`)
+  - Installers copy it to `~/.zshenv` if not present (never overwrite)
+
 ## 🚀 Quick Start
 
 ### macOS (M-series or Intel)
@@ -84,6 +98,8 @@ source ~/.zshrc
 - Git integration (if available)
 - Docker completion (if installed)
 - Kubernetes completion (if kubectl installed)
+- VPN helpers (`vpn-on` / `vpn-off` / `vpn-status`, macOS WireGuard; symlinked
+  into `~/.zsh-modules/` and loaded from `~/.zshenv`)
 
 ## 🔧 Configuration
 
@@ -101,6 +117,14 @@ source ~/.zshrc
 Machine-specific overrides (secrets, extra PATH entries, custom functions)
 belong in `~/.zshrc.local` — the template sources it at the end if present,
 so it survives re-copying the template.
+
+For non-interactive-safe modules (functions needed in `zsh -c`, scripts, and
+agent shells), copy `zshenv-template` to `~/.zshenv` instead of editing
+`~/.zshrc` — `~/.zshenv` is sourced by every zsh invocation:
+
+```bash
+cp zshenv-template ~/.zshenv   # only if ~/.zshenv doesn't exist yet
+```
 
 ### Customization
 Edit `~/.zshrc` to customize:

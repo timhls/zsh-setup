@@ -146,7 +146,34 @@ else
     echo "   ~/.zshrc already exists (not overwriting)"
 fi
 
-# Step 7: Summary
+# Step 7: Create .zshenv and module symlinks
+echo ""
+ZSHENV_TEMPLATE="$(dirname "$0")/zshenv-template"
+if [ ! -f ~/.zshenv ]; then
+    echo "📝 Creating ~/.zshenv..."
+    if [ -f "$ZSHENV_TEMPLATE" ]; then
+        cp "$ZSHENV_TEMPLATE" ~/.zshenv
+        echo "   ✅ Created from template"
+    else
+        echo "   ⚠️  Template not found at $ZSHENV_TEMPLATE"
+        echo "   Please copy zshenv-template to ~/.zshenv manually"
+    fi
+else
+    echo "   ~/.zshenv already exists (not overwriting)"
+fi
+
+# Modules: symlink from this repo into ~/.zsh-modules/ (repo = SSOT)
+echo "🔗 Symlinking shell modules..."
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+mkdir -p ~/.zsh-modules
+if [ -f "$REPO_DIR/vpn.zsh" ]; then
+    ln -sfn "$REPO_DIR/vpn.zsh" ~/.zsh-modules/vpn.zsh
+    echo "   ✅ vpn.zsh -> $REPO_DIR/vpn.zsh"
+else
+    echo "   ⚠️  vpn.zsh not found in $REPO_DIR (skipping)"
+fi
+
+# Step 8: Summary
 echo ""
 echo "========================="
 echo "✅ Setup Complete!"

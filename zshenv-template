@@ -1,0 +1,23 @@
+# ============================================================================
+# ~/.zshenv template — sourced by EVERY zsh invocation
+# ============================================================================
+# Keep this file minimal: it runs for interactive shells, `zsh -c` one-shots,
+# scripts, and ssh commands. Anything heavier belongs in ~/.zshrc.
+#
+# Only environment setup (PATH) and cheap, non-interactive-safe modules
+# whose functions must exist in non-interactive shells (e.g. agent/tool
+# shells) belong here. Modules are symlinked from this repo into
+# ~/.zsh-modules/ (repo = single source of truth).
+# ============================================================================
+
+# uv (Python package manager)
+export PATH="$HOME/.local/bin:$PATH"
+
+# ============================================================================
+# OPTIONAL MODULES (non-interactive-safe)
+# ============================================================================
+
+# vpn.zsh — WireGuard manual control (vpn-on / vpn-off / vpn-status).
+# Loaded here, not in ~/.zshrc, so the functions also exist in
+# non-interactive shells (agent shells, `zsh -c`, ssh one-shots).
+[ -f ~/.zsh-modules/vpn.zsh ] && source ~/.zsh-modules/vpn.zsh
